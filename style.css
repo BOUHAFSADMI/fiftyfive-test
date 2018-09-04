@@ -10,7 +10,6 @@ nav {
   background: #b61924;
   height: 100px;
   width: 100%;
-  position: fixed;
   top: 0;
   box-shadow: 0 10px 40px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(158, 154, 155, 0.4);
 }
@@ -27,13 +26,12 @@ nav {
   flex-wrap: wrap;
   margin: auto;
   background: repeating-linear-gradient(to right, #ddd, #ddd 1px, #fff 1px, #fff 5%);
-  background-color:#D3D5FD; 
   box-shadow: 0 4px 20px 0px #ffdfdf, 0 7px 10px -5px rgba(158, 154, 155, 0.4);
 }
 
 .header {
   margin-left: 40%;
-  margin-top: 12%;
+  margin-top: 5%;
   color: #dd3843;
   font-family: 'Courier New', Courier, monospace;
 }
@@ -60,34 +58,51 @@ a:hover {
 }
 
 .next {
-  background-color: #b61924;
+  background-color: #dd3843;
   color: white;
 }
 
-.round {
-  border-radius: 50%;
-}
-
-.date {
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  height: 25px;
-  background-color: transparent;
-  color: #fff;
-  background: #c4c0b8;
-  border-bottom-right-radius: 5px;
-  border-top-right-radius: 5px;
-  visibility: hidden;
-}
-
 .bar {
+  position: relative;
   background-color: #b61924;
   height: 25px;
   box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14), 0 7px 10px -5px rgba(158, 154, 155, 0.4);
   border-bottom-right-radius: 5px;
   border-top-right-radius: 5px;
   cursor: pointer;
+}
+
+.bar .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.bar .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+.bar:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
 }
 
 .bar-1 {
