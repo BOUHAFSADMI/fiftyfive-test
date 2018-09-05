@@ -2,18 +2,49 @@ var range = 0;
 var data;
 
 $(() => {
-    drawPlayersScores();
-    onNextClicked(30);
-    onPreviousClicked();
+    drawBarChart();
 });
 
+/**
+ * @function
+ * draws a bar chart
+ */
+async function drawBarChart() {
+    data = await getData();
+    drawPlayersScores();
+    var len = getDataLenght();
+    onNextClicked(len);
+    onPreviousClicked();
+}
 
+/**
+ * @function
+ * draw the players scores over time
+ */
+function drawPlayersScores() {
+    var playersScores = getPlayersScores();
+    var playersInfo = getPlayersInfo();
+    var dates = getDates(range);
+    drawChartBars(playersScores, playersInfo, dates);
+    drawPlayersColors(playersScores);
+}
+
+
+/**
+ * @class
+ * @attribute {Object} player - object containing disrname and last name
+ * @attribute {string} date - date of the game tour
+ * @attribute {string} score - score of the player in this date
+ * @attribute {integer} index - index of the score or the date
+ */
 class Tour {
-    constructor(player, date, score) {
+    constructor(player, date, score, index) {
         this.date = date;
         this.player = player;
         this.score = score;
+        this.index = index;
 
+        // create the elemnt in the DOM
         this.element = $("<div class='tooltip bar bar-" +
             this.calculatePercentage() + "'><span class='tooltiptext'>" +
             this.date + "</span></div>").appendTo(".chart").get(0);
@@ -36,37 +67,44 @@ Tour.prototype.handleEvent = function (e) {
 
 Tour.prototype.click = function (e) {
     showBarDetails(this.player, this.date, this.score);
+    document.location.hash = "index=" + this.index + "&user=" + this.player.firstname;
 }
 
-
+/**
+ * @function
+ * @returns {JSON} data - json object of palyers scores in each date
+ */
 async function getData() {
     var data = await $.get("http://cdn.55labs.com/demo/api.json");
     return data;
 }
 
-async function drawPlayersScores() {
-    data = await getData();
-    playersScores = getPlayersScores(data);
-    dates = getDates(data, range);
-    playersInfo = getPlayersInfo(data);
-    drawPlayersColors(playersScores);
-    drawChartBars(playersScores, playersInfo, dates);
-}
 
-
+/**
+ * @function
+ * @param {Array} players - arrayy of players 
+ */
 function drawPlayersColors(players) {
     for (player in players) {
         showPalyerColor(player);
     }
 }
 
-function getDataLenght(data) {
+/**
+ * @function
+ * @returns {Integer} len - Number of scores/dates
+ */
+function getDataLenght() {
     var dates = data.data.DAILY.dates;
     var len = Object.keys(dates).length;
     return len;
 }
 
-
+/**
+ * @function 
+ * shows the next 5 scores
+ * @param {Integer} len - the lenght of data to show
+ */
 function onNextClicked(len) {
     $("#next").click(() => {
         if ((range + 1) * 5 < len) {
@@ -81,6 +119,10 @@ function onNextClicked(len) {
     });
 }
 
+/**
+ * @function
+ * shows the previous 5 scores
+ */
 function onPreviousClicked() {
     $("#previous").click(() => {
         if (range - 1 >= 0) {
@@ -95,6 +137,12 @@ function onPreviousClicked() {
     });
 }
 
+/**
+ * 
+ * @param {Array} playersScores - array of players scores 
+ * @param {Array} playersInfo - array of players infomation
+ * @param {Array} dates - array of dates
+ */
 function drawChartBars(playersScores, playersInfo, dates) {
     for (dateIndex in dates) {
         var date = dates[dateIndex];
@@ -105,7 +153,9 @@ function drawChartBars(playersScores, playersInfo, dates) {
                 i++;
                 var index = parseInt(dateIndex) + 5 * range;
                 var score = playersScores[player].points[index];
-                new Tour(playersInfo[player], date, score);
+                var thePlayer = playersInfo[player];
+                new Tour(thePlayer, date, score, index);
+                // create a color from player username
                 var playerBarColor = "#" + intToRGB(hashCode(player));
                 $(".chart > div:nth-child(" + i + "n)").css("background-color", playerBarColor);
             }
@@ -115,12 +165,23 @@ function drawChartBars(playersScores, playersInfo, dates) {
     }
 }
 
+/**
+ * @function
+ * clean the chart, players list, details and url hash
+ */
 function cleanChartBars() {
     $(".chart").empty();
     $(".playersList").empty();
     $(".details h4").empty();
+    document.location.hash = "";
 }
 
+/**
+ * 
+ * @param {Object} player - player object contains first/last name 
+ * @param {string} date - date when the score is gotten
+ * @param {Integer} score - score of the player
+ */
 function showBarDetails(player, date, score) {
     $(".details h4").empty();
     $("#name").html("Player: " + player.firstname + " " + player.lastname);
@@ -128,30 +189,51 @@ function showBarDetails(player, date, score) {
     $("#score").html("Score: " + score);
 }
 
-function getPlayersScores(data) {
+/**
+ * @function
+ * @returns {Array} - array of players scores 
+ */
+function getPlayersScores() {
     var playersScores = data.data.DAILY.dataByMember.players;
     return playersScores;
 }
 
+/**
+ * @function
+ * get players informations
+ * @returns {Array} - array of player objects
+ */
 function getPlayersInfo() {
     var playersInfo = data.settings.dictionary;
     return playersInfo;
 }
 
-function getDates(data) {
+/**
+ * @function
+ * @returns {Array} - array of dates of scores
+ */
+function getDates() {
     var dates = data.data.DAILY.dates;
     var len = getDataLenght(data);
     dates = dates.slice(range * 5, Math.min((range + 1) * 5, len));
     return dates;
 }
 
-
+/**
+ * @function
+ * @param {string} player - name of the player
+ */
 function showPalyerColor(player) {
     var playerBarColor = "#" + intToRGB(hashCode(player));
     $(".playersList").append("<li><span id='" + player + "'>" + player + "</span></li><br>");
     $("#" + player).css("background", playerBarColor);
 }
 
+/**
+ * @function
+ * @param {string} str - the string to transform to a hash
+ * @returns {Integer} - hash of the string
+ */
 function hashCode(str) {
     var hash = 0;
     for (var i = 0; i < str.length; i++) {
@@ -160,6 +242,12 @@ function hashCode(str) {
     return hash;
 }
 
+/**
+ * @function
+ * @param {Integer} i - hash of a string
+ * @returns {string} - the color hexa  code
+ *  
+ */
 function intToRGB(i) {
     var c = (i & 0x00FFFFFF)
         .toString(16)
