@@ -7,20 +7,37 @@ $(() => {
     onPreviousClicked();
 });
 
-class Score {
-    constructor(date, value) {
+
+class Tour {
+    constructor(player, date, score) {
         this.date = date;
-        this.value = value;
+        this.player = player;
+        this.score = score;
+
+        this.element = $("<div class='tooltip bar bar-" +
+            this.calculatePercentage() + "'><span class='tooltiptext'>" +
+            this.date + "</span></div>").appendTo(".chart").get(0);
+        this.element.addEventListener("click", this, false);
+    }
+
+    calculatePercentage() {
+        var percentage = Math.floor(this.score * 100 / 1000);
+        return percentage;
     }
 }
 
-class Player {
-    constructor(firstname, lastname, scores) {
-        this.firstname = firstname;
-        this.lastname = lastname;
-        this.scores = scores;
+
+Tour.prototype.handleEvent = function (e) {
+    switch (e.type) {
+        case "click":
+            this.click(e);
     }
 }
+
+Tour.prototype.click = function (e) {
+    showBarDetails(this.player, this.date, this.score);
+}
+
 
 async function getData() {
     var data = await $.get("http://cdn.55labs.com/demo/api.json");
@@ -29,11 +46,11 @@ async function getData() {
 
 async function drawPlayersScores() {
     data = await getData();
-    players = getPlayers(data);
+    playersScores = getPlayersScores(data);
     dates = getDates(data, range);
-    drawPlayersColors(players);
-    drawChartBars(players, dates);
-    showBarDetails();
+    playersInfo = getPlayersInfo(data);
+    drawPlayersColors(playersScores);
+    drawChartBars(playersScores, playersInfo, dates);
 }
 
 
@@ -78,25 +95,22 @@ function onPreviousClicked() {
     });
 }
 
-function drawChartBars(players, dates) {
+function drawChartBars(playersScores, playersInfo, dates) {
     for (dateIndex in dates) {
         var date = dates[dateIndex];
         if (date != null) {
             date = date.slice(6, 8) + "-" + date.slice(4, 6) + "-" + date.slice(0, 4);
-            console.log(dateIndex, date);
             var i = 0;
-            for (var player in players) {
+            for (var player in playersScores) {
                 i++;
                 var index = parseInt(dateIndex) + 5 * range;
-                var score = players[player].points[index];
-                var scorePercentage = Math.floor(score * 100 / 1000);
-                $(".chart").append("<div class='tooltip bar bar-" +
-                    scorePercentage + "'><span class='tooltiptext'>" + date + "</span></div>");
+                var score = playersScores[player].points[index];
+                new Tour(playersInfo[player], date, score);
                 var playerBarColor = "#" + intToRGB(hashCode(player));
                 $(".chart > div:nth-child(" + i + "n)").css("background-color", playerBarColor);
             }
         }
-        var playersNumber = Object.keys(players).length;
+        var playersNumber = Object.keys(playersScores).length;
         $(".chart > div:nth-child(" + playersNumber + "n)").css("margin-bottom", "10px");
     }
 }
@@ -104,21 +118,24 @@ function drawChartBars(players, dates) {
 function cleanChartBars() {
     $(".chart").empty();
     $(".playersList").empty();
-    $(".details h5").empty();
+    $(".details h4").empty();
 }
 
-function showBarDetails() {
-    $(".bar").click(() => {
-        $("#name").html("Player: ");
-        $("#date").html("Date: ");
-        $("#score").html("Score: ");
-        $("#rank").html("Rank: ");
-    });
+function showBarDetails(player, date, score) {
+    $(".details h4").empty();
+    $("#name").html("Player: " + player.firstname + " " + player.lastname);
+    $("#date").html("Date: " + date);
+    $("#score").html("Score: " + score);
 }
 
-function getPlayers(data) {
-    var players = data.data.DAILY.dataByMember.players;
-    return players;
+function getPlayersScores(data) {
+    var playersScores = data.data.DAILY.dataByMember.players;
+    return playersScores;
+}
+
+function getPlayersInfo() {
+    var playersInfo = data.settings.dictionary;
+    return playersInfo;
 }
 
 function getDates(data) {
