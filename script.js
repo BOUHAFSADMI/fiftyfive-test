@@ -1,11 +1,26 @@
 var range = 0;
 var data;
 
-$(function () {
+$(() => {
     drawPlayersScores();
     onNextClicked(30);
     onPreviousClicked();
 });
+
+class Score {
+    constructor(date, value) {
+        this.date = date;
+        this.value = value;
+    }
+}
+
+class Player {
+    constructor(firstname, lastname, scores) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.scores = scores;
+    }
+}
 
 async function getData() {
     var data = await $.get("http://cdn.55labs.com/demo/api.json");
@@ -16,9 +31,17 @@ async function drawPlayersScores() {
     data = await getData();
     players = getPlayers(data);
     dates = getDates(data, range);
+    drawPlayersColors(players);
     drawChartBars(players, dates);
+    showBarDetails();
 }
 
+
+function drawPlayersColors(players) {
+    for (player in players) {
+        showPalyerColor(player);
+    }
+}
 
 function getDataLenght(data) {
     var dates = data.data.DAILY.dates;
@@ -28,7 +51,7 @@ function getDataLenght(data) {
 
 
 function onNextClicked(len) {
-    $("#next").click(function () {
+    $("#next").click(() => {
         if ((range + 1) * 5 < len) {
             range++;
             $("#previous").css({ "background": "#dd3843", "color": "white" });
@@ -42,7 +65,7 @@ function onNextClicked(len) {
 }
 
 function onPreviousClicked() {
-    $("#previous").click(function () {
+    $("#previous").click(() => {
         if (range - 1 >= 0) {
             range--;
             $("#next").css({ "background": "#dd3843", "color": "white" });
@@ -68,7 +91,7 @@ function drawChartBars(players, dates) {
                 var score = players[player].points[index];
                 var scorePercentage = Math.floor(score * 100 / 1000);
                 $(".chart").append("<div class='tooltip bar bar-" +
-                    scorePercentage + "'><span class='tooltiptext'>" + date + ' score:' + score + "</span></div>");
+                    scorePercentage + "'><span class='tooltiptext'>" + date + "</span></div>");
                 var playerBarColor = "#" + intToRGB(hashCode(player));
                 $(".chart > div:nth-child(" + i + "n)").css("background-color", playerBarColor);
             }
@@ -80,6 +103,17 @@ function drawChartBars(players, dates) {
 
 function cleanChartBars() {
     $(".chart").empty();
+    $(".playersList").empty();
+    $(".details h5").empty();
+}
+
+function showBarDetails() {
+    $(".bar").click(() => {
+        $("#name").html("Player: ");
+        $("#date").html("Date: ");
+        $("#score").html("Score: ");
+        $("#rank").html("Rank: ");
+    });
 }
 
 function getPlayers(data) {
@@ -94,6 +128,12 @@ function getDates(data) {
     return dates;
 }
 
+
+function showPalyerColor(player) {
+    var playerBarColor = "#" + intToRGB(hashCode(player));
+    $(".playersList").append("<li><span id='" + player + "'>" + player + "</span></li><br>");
+    $("#" + player).css("background", playerBarColor);
+}
 
 function hashCode(str) {
     var hash = 0;
